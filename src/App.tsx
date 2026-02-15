@@ -15,7 +15,7 @@ function App() {
   return (
     <main className="container">
       <h1>Welcome to Tauri + React</h1>
-
+      {/* 
       <div className="row">
         <a href="https://vitejs.dev" target="_blank">
           <img src="/vite.svg" className="logo vite" alt="Vite logo" />
@@ -28,7 +28,7 @@ function App() {
         </a>
       </div>
       <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
+ */}
       <form
         className="row"
         onSubmit={(e) => {
@@ -41,7 +41,7 @@ function App() {
           onChange={(e) => setName(e.currentTarget.value)}
           placeholder="Enter a name..."
         />
-        <button type="submit" className="opacity-25">
+        <button type="submit" className="">
           Greet
         </button>
       </form>
