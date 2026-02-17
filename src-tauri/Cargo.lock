@@ -334,6 +334,7 @@ dependencies = [
 name = "btglow"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "curl_smile",
  "serde",
  "serde_json",
