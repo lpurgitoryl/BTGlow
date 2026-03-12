@@ -4,6 +4,16 @@ use curl_smile::{
     },
     hardware_abstraction_layer::device::SupportedDevice,
 };
+
+use std::sync::Mutex;
+use tauri::Manager;
+use tauri::State;
+
+#[derive(Default)]
+struct AppState {
+    scanned_devices: Vec<SupportedDevice>,
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -11,18 +21,23 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-async fn scan_devices() -> Result<Vec<String>, String> {
-    Ok(find_supported_devices()
-        .await
-        .map_err(|e| e.to_string())?
-        .into_iter()
-        .map(|d| d.name)
-        .collect())
+async fn scan_devices(state: State<'_, Mutex<AppState>>) -> Result<Vec<String>, String> {
+    let devices = find_supported_devices().await.map_err(|e| e.to_string())?;
+    let names: Vec<String> = devices.iter().map(|d| d.name.clone()).collect();
+    let mut app_state = state.lock().unwrap();
+
+    app_state.scanned_devices = devices;
+
+    Ok(names)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            app.manage(Mutex::new(AppState::default()));
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet, scan_devices])
         .run(tauri::generate_context!())

@@ -2,10 +2,10 @@ import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-
+import DeviceSelection from "../DeviceSelection/DeviceSelection";
 function Scanner() {
   const [scannedDevices, setScannedDevices] = useState(false);
-  const [deviceList, setDeviceList] = useState<string[]>([]);
+  const [deviceNameList, setDeviceNameList] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
 
   async function Scan() {
@@ -13,7 +13,7 @@ function Scanner() {
 
     const devices = await invoke<string[]>("scan_devices");
 
-    setDeviceList(devices);
+    setDeviceNameList(devices);
     setScannedDevices(devices.length > 0);
 
     setIsScanning(false);
@@ -34,7 +34,7 @@ function Scanner() {
         beat={isScanning}
         size="4x"
       />
-      <p>{deviceList}</p>
+      <DeviceSelection deviceNameList={deviceNameList} />
     </section>
   );
 }
