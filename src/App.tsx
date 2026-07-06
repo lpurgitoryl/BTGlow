@@ -8,7 +8,7 @@ function App() {
     <main className="">
       <section className="flex flex-col items-center m-4">
         <Scanner />
-        <DeviceAction />
+        {/* <DeviceAction /> */}
       </section>
     </main>
   );
