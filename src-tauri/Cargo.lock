@@ -677,9 +677,9 @@ dependencies = [
 
 [[package]]
 name = "curl_smile"
-version = "0.0.5"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4735c4cf088d01c4f1a5e98e6532bc74d89739d978830ecec68688d2dc8b0576"
+checksum = "4ad406bcd41594ae205fceed2eac001ceb666fd39da1005722ef4d96024eb609"
 dependencies = [
  "anyhow",
  "btleplug",

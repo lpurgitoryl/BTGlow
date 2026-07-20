@@ -89,8 +89,6 @@ function Scanner() {
     <section className="m-4 flex justify-center">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-900/80 p-6 text-center shadow-2xl backdrop-blur">
         <div className="mb-6">
-          <h2 className="mt-2 text-2xl font-bold text-white">Device Scanner</h2>
-
           <p className="mt-2 text-sm text-zinc-400">{helperText}</p>
         </div>
 
@@ -125,7 +123,7 @@ function Scanner() {
 
         {hasDevices && (
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
-            <DeviceSelection devices={devices} />
+            <DeviceSelection />
           </div>
         )}
       </div>
