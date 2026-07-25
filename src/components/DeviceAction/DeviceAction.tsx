@@ -36,14 +36,6 @@ function hexToRgb(hex: string) {
 }
 
 // Dummy function to simulate updating the Bluetooth light color
-function updateBluetoothLightColor(hex: string) {
-  const rgb = hexToRgb(hex);
-
-  console.log("Updating Bluetooth light color:", {
-    hex,
-    ...rgb,
-  });
-}
 
 function DeviceAction() {
   const bluetoothUIState = useBluetoothStore(
@@ -53,6 +45,8 @@ function DeviceAction() {
   const disconnectFromDevice = useBluetoothStore(
     (store) => store.disconnectFromDevice,
   );
+
+  const updateLightColor = useBluetoothStore((store) => store.updateLightColor);
 
   const [hsva, setHsva] = useState(INITIAL_COLOR);
 
@@ -68,6 +62,17 @@ function DeviceAction() {
   const handlePresetChange = (hex: string) => {
     setHsva(hexToHsva(hex));
   };
+
+  function updateBluetoothLightColor(hex: string) {
+    const rgb = hexToRgb(hex);
+
+    console.log("Updating Bluetooth light color:", {
+      hex,
+      ...rgb,
+    });
+
+    updateLightColor(rgb.red, rgb.green, rgb.blue);
+  }
 
   const handleApplyColor = () => {
     updateBluetoothLightColor(selectedHex);

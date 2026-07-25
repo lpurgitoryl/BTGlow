@@ -39,6 +39,7 @@ type BluetoothStoreActions = {
   searchDevices: () => Promise<void>;
   connectToDevice: (deviceName: string) => Promise<void>;
   disconnectFromDevice: () => Promise<void>;
+  updateLightColor: (red: number, green: number, blue: number) => Promise<void>;
 };
 
 type BluetoothStore = {
@@ -159,11 +160,11 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
     }
   },
   disconnectFromDevice: async () => {
-    const currentBluetoothUIState = get().state.bluetoothUIState;
+    const currentState = get().state;
 
-    if (currentBluetoothUIState.status !== "connected") return;
+    if (currentState.bluetoothUIState.status !== "connected") return;
 
-    const deviceName = currentBluetoothUIState.deviceName;
+    const deviceName = currentState.bluetoothUIState.deviceName;
 
     set((store) => ({
       state: {
@@ -193,7 +194,53 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
           bluetoothUIState: {
             status: "error",
             message: String(error),
-            previous: currentBluetoothUIState,
+            previous: currentState.bluetoothUIState,
+          },
+        },
+      }));
+    }
+  },
+  updateLightColor: async (red: number, green: number, blue: number) => {
+    const currentState = get().state;
+
+    if (
+      isBluetoothBusy(currentState.bluetoothUIState) ||
+      currentState.bluetoothUIState.status !== "connected"
+    )
+      return;
+
+    set({
+      state: {
+        ...currentState,
+        bluetoothUIState: {
+          status: "sending_command",
+          deviceName: currentState.bluetoothUIState.deviceName,
+          lightState: currentState.bluetoothUIState.lightState,
+        },
+      },
+    });
+
+    try {
+      await invoke<string>("update_light_color", { red, green, blue });
+
+      set({
+        state: {
+          ...currentState,
+          bluetoothUIState: {
+            status: "connected",
+            deviceName: currentState.bluetoothUIState.deviceName,
+            lightState: currentState.bluetoothUIState.lightState,
+          },
+        },
+      });
+    } catch (error) {
+      set((store) => ({
+        state: {
+          ...store.state,
+          bluetoothUIState: {
+            status: "error",
+            message: String(error),
+            previous: currentState.bluetoothUIState,
           },
         },
       }));

@@ -3,7 +3,7 @@ use curl_smile::{
         connect_to_btle_device, disconnect_from_btle_device, find_supported_devices,
     },
     hardware_abstraction_layer::device::SupportedDevice,
-    Intent::SwitchOn,
+    Intent::{Brightness, Rgb, SwitchOn},
     LightState,
 };
 
@@ -97,6 +97,34 @@ async fn disconnect_from_device(state: State<'_, Mutex<AppState>>) -> Result<Str
     Ok(device.name)
 }
 
+#[tauri::command]
+async fn update_light_color(
+    red: u8,
+    green: u8,
+    blue: u8,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<String, String> {
+    let device = {
+        let app_state = state.lock().unwrap();
+
+        app_state
+            .connected_device
+            .clone()
+            .ok_or_else(|| "No device is currently connected".to_string())?
+    };
+
+    let mut d_state = LightState::new();
+    d_state.update(Rgb { red, green, blue });
+    device
+        .send_commands(&d_state)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    println!("Updated color for {}", device.name);
+
+    Ok(device.name)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -108,7 +136,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             scan_devices,
             connect_to_device,
-            disconnect_from_device
+            disconnect_from_device,
+            update_light_color
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
