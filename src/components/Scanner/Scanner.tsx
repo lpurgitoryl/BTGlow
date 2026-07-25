@@ -83,6 +83,7 @@ function Scanner() {
 
   const hasActiveDevice =
     bluetoothUIState.status === "connected" ||
+    bluetoothUIState.status === "sending_command" ||
     bluetoothUIState.status === "disconnecting";
 
   const hasDevices = discoveredDeviceNames.length > 0;

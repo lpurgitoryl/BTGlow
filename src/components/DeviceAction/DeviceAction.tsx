@@ -50,7 +50,10 @@ function DeviceAction() {
 
   const [hsva, setHsva] = useState(INITIAL_COLOR);
 
-  const isConnected = bluetoothUIState.status === "connected";
+  const isConnected =
+    bluetoothUIState.status === "connected" ||
+    bluetoothUIState.status === "sending_command";
+
   const isDisconnecting = bluetoothUIState.status === "disconnecting";
 
   if (!isConnected && !isDisconnecting) {
