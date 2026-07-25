@@ -2,6 +2,7 @@ import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DeviceSelection from "../DeviceSelection/DeviceSelection";
 import { useBluetoothStore } from "../../stores/bluetoothStore";
+import DeviceAction from "../DeviceAction/DeviceAction";
 
 function getScanText(
   isScanning: boolean,
@@ -73,12 +74,12 @@ function getScanIconColor(isScanning: boolean, hasDevices: boolean) {
 function Scanner() {
   const { state, searchDevices } = useBluetoothStore();
 
-  const isScanning = state.status === "searching";
-  const isSearchResults = state.status === "search_results";
-  const isError = state.status === "error";
+  const { bluetoothUIState, discoveredDeviceNames } = state;
 
-  const devices = isSearchResults ? state.devices : [];
-  const hasDevices = devices.length > 0;
+  const isScanning = bluetoothUIState.status === "searching";
+  const isSearchResults = bluetoothUIState.status === "search_results";
+
+  const hasDevices = discoveredDeviceNames.length > 0;
 
   const scanText = getScanText(isScanning, isSearchResults, hasDevices);
   const helperText = getHelperText(isScanning, isSearchResults, hasDevices);
@@ -114,9 +115,9 @@ function Scanner() {
         <div className="mt-5">
           <p className="text-base font-semibold text-white">{scanText}</p>
 
-          {isError && (
+          {bluetoothUIState.status === "error" && (
             <p className="mt-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {state.message}
+              {bluetoothUIState.message}
             </p>
           )}
         </div>
@@ -126,6 +127,8 @@ function Scanner() {
             <DeviceSelection />
           </div>
         )}
+
+        <DeviceAction />
       </div>
     </section>
   );

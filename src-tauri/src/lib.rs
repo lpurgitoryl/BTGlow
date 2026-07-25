@@ -3,6 +3,8 @@ use curl_smile::{
         connect_to_btle_device, disconnect_from_btle_device, find_supported_devices,
     },
     hardware_abstraction_layer::device::SupportedDevice,
+    Intent::SwitchOn,
+    LightState,
 };
 
 use std::sync::Mutex;
@@ -13,12 +15,6 @@ use tauri::State;
 struct AppState {
     scanned_devices: Vec<SupportedDevice>,
     connected_device: Option<SupportedDevice>,
-}
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 #[tauri::command]
@@ -57,7 +53,39 @@ async fn connect_to_device(
         app_state.connected_device = Some(device.clone());
     }
 
+    let mut d_state = LightState::new();
+    d_state.update(SwitchOn(true));
+    device
+        .send_commands(&d_state)
+        .await
+        .map_err(|e| e.to_string())?;
+
     println!("Connected to {}", device.name);
+
+    Ok(device.name)
+}
+
+#[tauri::command]
+async fn disconnect_from_device(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    let device = {
+        let app_state = state.lock().unwrap();
+
+        app_state
+            .connected_device
+            .clone()
+            .ok_or_else(|| "No device is currently connected".to_string())?
+    };
+
+    disconnect_from_btle_device(&device)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    {
+        let mut app_state = state.lock().unwrap();
+        app_state.connected_device = None;
+    }
+
+    println!("Disconnected from {}", device.name);
 
     Ok(device.name)
 }
@@ -71,9 +99,9 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            greet,
             scan_devices,
-            connect_to_device
+            connect_to_device,
+            disconnect_from_device
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

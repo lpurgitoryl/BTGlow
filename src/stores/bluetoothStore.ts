@@ -1,5 +1,3 @@
-// src/stores/bluetoothStore.ts
-
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -7,125 +5,199 @@ export type BluetoothLightState = {
   power: boolean;
 };
 
-export type BluetoothStoreStatus =
-  | "idle"
-  | "searching"
-  | "search_results"
-  | "connecting"
-  | "connected"
-  | "sending_command"
-  | "disconnecting"
-  | "error";
-
-function isBusy(state: BluetoothStoreState) {
-  return (
-    state.status === "searching" ||
-    state.status === "connecting" ||
-    state.status === "sending_command" ||
-    state.status === "disconnecting"
-  );
-}
-
-export type BluetoothStoreState =
+export type BluetoothUIState =
   | { status: "idle" }
   | { status: "searching" }
-  | { status: "search_results"; devices: string[] }
-  | { status: "connecting"; devices: string[] }
+  | { status: "search_results" }
+  | { status: "connecting"; deviceName: string }
   | {
       status: "connected";
       deviceName: string;
-      devices: string[];
       lightState: BluetoothLightState;
     }
   | {
       status: "sending_command";
-      device: string;
-      devices: string[];
+      deviceName: string;
       lightState: BluetoothLightState;
     }
-  | { status: "disconnecting"; device: string; devices: string[] }
-  | { status: "error"; message: string; previous?: BluetoothStoreState };
+  | {
+      status: "disconnecting";
+      deviceName: string;
+    }
+  | {
+      status: "error";
+      message: string;
+      previous?: BluetoothUIState;
+    };
 
-type BluetoothStoreStateContainer = {
-  state: BluetoothStoreState;
+export type BluetoothStoreState = {
+  discoveredDeviceNames: string[];
+  bluetoothUIState: BluetoothUIState;
 };
 
 type BluetoothStoreActions = {
   searchDevices: () => Promise<void>;
   connectToDevice: (deviceName: string) => Promise<void>;
+  disconnectFromDevice: () => Promise<void>;
 };
 
-type BluetoothStore = BluetoothStoreStateContainer & BluetoothStoreActions;
+type BluetoothStore = {
+  state: BluetoothStoreState;
+} & BluetoothStoreActions;
+
+function isBluetoothBusy(bluetoothUIState: BluetoothUIState) {
+  return (
+    bluetoothUIState.status === "searching" ||
+    bluetoothUIState.status === "connecting" ||
+    bluetoothUIState.status === "sending_command" ||
+    bluetoothUIState.status === "disconnecting"
+  );
+}
 
 export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
-  state: { status: "idle" },
+  state: {
+    discoveredDeviceNames: [],
+    bluetoothUIState: { status: "idle" },
+  },
 
   searchDevices: async () => {
-    const current_state = get().state;
+    const currentState = get().state;
 
-    if (isBusy(current_state)) return;
+    if (isBluetoothBusy(currentState.bluetoothUIState)) return;
+    if (currentState.bluetoothUIState.status !== "connected") return;
 
-    set({
-      state: { status: "searching" },
-    });
-
-    try {
-      const devices = await invoke<string[]>("scan_devices");
-
-      set({
-        state: {
-          status: "search_results",
-          devices,
-        },
-      });
-    } catch (error) {
-      set({
-        state: {
-          status: "error",
-          message: String(error),
-          previous: current_state,
-        },
-      });
-    }
-  },
-  connectToDevice: async (deviceName: string) => {
-    const current_state = get().state;
-
-    if (isBusy(current_state)) return;
     set({
       state: {
-        status: "connecting",
-        devices:
-          current_state.status === "search_results"
-            ? current_state.devices
-            : [],
+        ...currentState,
+        bluetoothUIState: {
+          status: "searching",
+        },
       },
     });
 
     try {
-      const connectedDevice = await invoke<string>("connect_to_device", {
-        deviceName: deviceName,
-      });
-
+      const discoveredDeviceNames = await invoke<string[]>("scan_devices");
       set({
         state: {
-          status: "connected",
-          deviceName: connectedDevice,
-          lightState: { power: true },
-          devices:
-            current_state.status !== "idle" && current_state.status !== "error"
-              ? current_state.devices
-              : [],
+          discoveredDeviceNames,
+          bluetoothUIState: {
+            status: "search_results",
+          },
         },
       });
     } catch (error) {
       set({
         state: {
-          status: "error",
-          message: String(error),
-          previous: current_state,
+          ...currentState,
+          bluetoothUIState: {
+            status: "error",
+            message: String(error),
+            previous: currentState.bluetoothUIState,
+          },
         },
       });
+    }
+  },
+
+  connectToDevice: async (deviceName: string) => {
+    const currentState = get().state;
+
+    if (isBluetoothBusy(currentState.bluetoothUIState)) return;
+
+    if (!currentState.discoveredDeviceNames.includes(deviceName)) {
+      set({
+        state: {
+          ...currentState,
+          bluetoothUIState: {
+            status: "error",
+            message: `Device "${deviceName}" was not found in the scan results.`,
+            previous: currentState.bluetoothUIState,
+          },
+        },
+      });
+
+      return;
+    }
+
+    set({
+      state: {
+        ...currentState,
+        bluetoothUIState: {
+          status: "connecting",
+          deviceName,
+        },
+      },
+    });
+
+    try {
+      const connectedDeviceName = await invoke<string>("connect_to_device", {
+        deviceName,
+      });
+
+      set((store) => ({
+        state: {
+          ...store.state,
+          bluetoothUIState: {
+            status: "connected",
+            deviceName: connectedDeviceName,
+            lightState: {
+              power: true,
+            },
+          },
+        },
+      }));
+    } catch (error) {
+      set({
+        state: {
+          ...currentState,
+          bluetoothUIState: {
+            status: "error",
+            message: String(error),
+            previous: currentState.bluetoothUIState,
+          },
+        },
+      });
+    }
+  },
+  disconnectFromDevice: async () => {
+    const currentBluetoothUIState = get().state.bluetoothUIState;
+
+    if (currentBluetoothUIState.status !== "connected") return;
+
+    const deviceName = currentBluetoothUIState.deviceName;
+
+    set((store) => ({
+      state: {
+        ...store.state,
+        bluetoothUIState: {
+          status: "disconnecting",
+          deviceName,
+        },
+      },
+    }));
+
+    try {
+      await invoke<string>("disconnect_device");
+
+      set((store) => ({
+        state: {
+          ...store.state,
+          bluetoothUIState: {
+            status: "idle",
+          },
+        },
+      }));
+    } catch (error) {
+      set((store) => ({
+        state: {
+          ...store.state,
+          bluetoothUIState: {
+            status: "error",
+            message: String(error),
+            previous: currentBluetoothUIState,
+          },
+        },
+      }));
     }
   },
 }));

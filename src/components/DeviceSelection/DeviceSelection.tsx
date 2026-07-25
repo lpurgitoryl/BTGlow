@@ -2,11 +2,10 @@ import { useBluetoothStore } from "../../stores/bluetoothStore";
 
 function DeviceSelection() {
   const { state, connectToDevice } = useBluetoothStore();
+  const { discoveredDeviceNames } = state;
 
-  const devices =
-    state.status === "search_results" || state.status === "connecting"
-      ? state.devices
-      : [];
+  const devices = discoveredDeviceNames.length > 0 ? discoveredDeviceNames : [];
+
   return (
     <section className="space-y-3">
       <div className="text-left">
