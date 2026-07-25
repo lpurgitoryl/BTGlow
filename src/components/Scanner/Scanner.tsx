@@ -78,6 +78,9 @@ function Scanner() {
 
   const isScanning = bluetoothUIState.status === "searching";
   const isSearchResults = bluetoothUIState.status === "search_results";
+  const hasActiveDevice =
+    bluetoothUIState.status === "connected" ||
+    bluetoothUIState.status === "disconnecting";
 
   const hasDevices = discoveredDeviceNames.length > 0;
 
@@ -86,6 +89,15 @@ function Scanner() {
   const scanButtonClassName = getScanButtonClassName(isScanning, hasDevices);
   const scanIconColor = getScanIconColor(isScanning, hasDevices);
 
+  if (hasActiveDevice) {
+    return (
+      <section className="m-4 flex justify-center">
+        <div className="w-full max-w-md">
+          <DeviceAction />
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="m-4 flex justify-center">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-900/80 p-6 text-center shadow-2xl backdrop-blur">

@@ -176,7 +176,7 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
     }));
 
     try {
-      await invoke<string>("disconnect_device");
+      await invoke<string>("disconnect_from_device");
 
       set((store) => ({
         state: {

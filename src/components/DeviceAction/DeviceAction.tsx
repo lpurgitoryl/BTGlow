@@ -50,11 +50,18 @@ function DeviceAction() {
     (store) => store.state.bluetoothUIState,
   );
 
-  if (bluetoothUIState.status !== "connected") {
-    return null;
-  }
+  const disconnectFromDevice = useBluetoothStore(
+    (store) => store.disconnectFromDevice,
+  );
 
   const [hsva, setHsva] = useState(INITIAL_COLOR);
+
+  const isConnected = bluetoothUIState.status === "connected";
+  const isDisconnecting = bluetoothUIState.status === "disconnecting";
+
+  if (!isConnected && !isDisconnecting) {
+    return null;
+  }
 
   const selectedHex = hsvaToHex(hsva);
 
@@ -77,16 +84,47 @@ function DeviceAction() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+        <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${
+              isDisconnecting
+                ? "border-amber-500/20 bg-amber-500/10"
+                : "border-emerald-500/20 bg-emerald-500/10"
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                isDisconnecting
+                  ? "animate-pulse bg-amber-400"
+                  : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+              }`}
+            />
 
-          <span className="text-xs font-medium text-emerald-300">
-            Connected
-          </span>
+            <span
+              className={`text-xs font-medium ${
+                isDisconnecting ? "text-amber-300" : "text-emerald-300"
+              }`}
+            >
+              {isDisconnecting ? "Disconnecting" : "Connected"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            disabled={isDisconnecting}
+            onClick={disconnectFromDevice}
+            className="cursor-pointer rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:border-red-400/50 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-6 p-5">
+      <div
+        className={`flex flex-col items-center gap-6 p-5 transition ${
+          isDisconnecting ? "pointer-events-none opacity-40" : ""
+        }`}
+      >
         <div className="rounded-full bg-white/5 p-3 shadow-inner shadow-black/40">
           <Wheel
             color={hsva}
@@ -141,8 +179,9 @@ function DeviceAction() {
 
           <button
             type="button"
+            disabled={isDisconnecting}
             onClick={handleApplyColor}
-            className="cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-95"
+            className="cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Apply
           </button>

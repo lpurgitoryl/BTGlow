@@ -76,6 +76,13 @@ async fn disconnect_from_device(state: State<'_, Mutex<AppState>>) -> Result<Str
             .ok_or_else(|| "No device is currently connected".to_string())?
     };
 
+    let mut d_state = LightState::new();
+    d_state.update(SwitchOn(false));
+    device
+        .send_commands(&d_state)
+        .await
+        .map_err(|e| e.to_string())?;
+
     disconnect_from_btle_device(&device)
         .await
         .map_err(|e| e.to_string())?;
