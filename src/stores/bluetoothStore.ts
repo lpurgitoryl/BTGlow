@@ -64,7 +64,6 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
     const currentState = get().state;
 
     if (isBluetoothBusy(currentState.bluetoothUIState)) return;
-    if (currentState.bluetoothUIState.status !== "connected") return;
 
     set({
       state: {
