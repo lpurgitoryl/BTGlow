@@ -5,6 +5,19 @@ export type BluetoothLightState = {
   power: boolean;
 };
 
+type StartupBluetoothResult =
+  | {
+      status: "connected";
+      device_name: string;
+    }
+  | {
+      status: "devices_found";
+      devices: string[];
+    }
+  | {
+      status: "no_devices_found";
+    };
+
 export type BluetoothUIState =
   | { status: "idle" }
   | { status: "searching" }
@@ -40,10 +53,12 @@ type BluetoothStoreActions = {
   connectToDevice: (deviceName: string) => Promise<void>;
   disconnectFromDevice: () => Promise<void>;
   updateLightColor: (red: number, green: number, blue: number) => Promise<void>;
+  initializeBluetooth: () => Promise<void>;
 };
 
 type BluetoothStore = {
   state: BluetoothStoreState;
+  hasInitializedBluetooth: boolean;
 } & BluetoothStoreActions;
 
 function isBluetoothBusy(bluetoothUIState: BluetoothUIState) {
@@ -60,6 +75,7 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
     discoveredDeviceNames: [],
     bluetoothUIState: { status: "idle" },
   },
+  hasInitializedBluetooth: false,
 
   searchDevices: async () => {
     const currentState = get().state;
@@ -241,6 +257,69 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
             status: "error",
             message: String(error),
             previous: currentState.bluetoothUIState,
+          },
+        },
+      }));
+    }
+  },
+  initializeBluetooth: async () => {
+    if (get().hasInitializedBluetooth) return;
+
+    set({
+      hasInitializedBluetooth: true,
+    });
+
+    set((store) => ({
+      state: {
+        ...store.state,
+        bluetoothUIState: {
+          status: "connecting",
+          deviceName: "Saved device",
+        },
+      },
+    }));
+
+    try {
+      const result = await invoke<StartupBluetoothResult>(
+        "initialize_bluetooth",
+      );
+
+      if (result.status === "connected") {
+        set((store) => ({
+          state: {
+            ...store.state,
+            bluetoothUIState: {
+              status: "connected",
+              deviceName: result.device_name,
+              lightState: {
+                power: true,
+              },
+            },
+          },
+        }));
+
+        return;
+      }
+
+      set((store) => ({
+        state: {
+          ...store.state,
+          bluetoothUIState: {
+            status: "search_results",
+            devices: result.status === "devices_found" ? result.devices : [],
+          },
+        },
+      }));
+    } catch (error) {
+      set((store) => ({
+        state: {
+          ...store.state,
+          bluetoothUIState: {
+            status: "error",
+            message: String(error),
+            previous: {
+              status: "idle",
+            },
           },
         },
       }));

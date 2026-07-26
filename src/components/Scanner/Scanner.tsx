@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DeviceSelection from "../DeviceSelection/DeviceSelection";
 import { useBluetoothStore } from "../../stores/bluetoothStore";
 import DeviceAction from "../DeviceAction/DeviceAction";
+import { useEffect } from "react";
 
 function getScanText(
   isScanning: boolean,
@@ -72,9 +73,13 @@ function getScanIconColor(isBusy: boolean, hasDevices: boolean) {
 }
 
 function Scanner() {
-  const { state, searchDevices } = useBluetoothStore();
+  const { state, searchDevices, initializeBluetooth } = useBluetoothStore();
 
   const { bluetoothUIState, discoveredDeviceNames } = state;
+
+  useEffect(() => {
+    initializeBluetooth();
+  }, []);
 
   const isScanning = bluetoothUIState.status === "searching";
   const isConnecting = bluetoothUIState.status === "connecting";
