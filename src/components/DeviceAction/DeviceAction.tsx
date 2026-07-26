@@ -35,18 +35,10 @@ function hexToRgb(hex: string) {
   };
 }
 
-// Dummy function to simulate updating the Bluetooth light color
-
 function DeviceAction() {
-  const bluetoothUIState = useBluetoothStore(
-    (store) => store.state.bluetoothUIState,
-  );
+  const { state, disconnectFromDevice, updateLightColor } = useBluetoothStore();
 
-  const disconnectFromDevice = useBluetoothStore(
-    (store) => store.disconnectFromDevice,
-  );
-
-  const updateLightColor = useBluetoothStore((store) => store.updateLightColor);
+  const bluetoothUIState = state.bluetoothUIState;
 
   const [hsva, setHsva] = useState(INITIAL_COLOR);
 
