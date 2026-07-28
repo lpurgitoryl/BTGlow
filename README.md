@@ -11,7 +11,6 @@ It is built upon the Tauri ecosystem.
 - Automatically reconnect to a previously saved device
 - Turn the light on or off
 - Change the light color
-- Adjust brightness
 - Show clear scanning, connecting, command, and disconnecting states
 - Recover gracefully from Bluetooth errors
 
@@ -65,19 +64,18 @@ src-tauri/target/release/bundle/
 
 ## Basic Usage
 
-1. Turn on a supported Bluetooth light.
-2. Enable Bluetooth on the computer.
-3. Open BTGlow.
-4. Scan for nearby devices.
-5. Select a device.
-6. Use the connected-device controls to change its power, color, or brightness.
-7. Disconnect when finished.
+1. Enable Bluetooth on the computer.
+2. Open BTGlow.
+3. Scan for nearby devices.
+4. Select a device.
+5. Use the controls to change its color.
+6. Disconnect when finished.
 
 BTGlow may automatically reconnect to the previously saved device when the application starts.
 
 ## Documentation
 
-Implementation details, architecture, Bluetooth behavior, troubleshooting, and extension instructions are available in [documentation.md](documentation.md).
+Implementation details, architecture, Bluetooth behavior, troubleshooting, and etc are available in [documentation.md](documentation.md).
 
 ## Project Status
 
