@@ -77,8 +77,6 @@ function DeviceAction() {
     <section className="w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-xl shadow-black/20 backdrop-blur">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-white">Light color</h2>
-
           <p className="mt-1 text-sm text-zinc-400">
             Choose a color for {bluetoothUIState.deviceName}
           </p>
@@ -105,7 +103,7 @@ function DeviceAction() {
                 isDisconnecting ? "text-amber-300" : "text-emerald-300"
               }`}
             >
-              {isDisconnecting ? "Disconnecting" : "Connected"}
+              {isDisconnecting ? "Disconnecting" : ""}
             </span>
           </div>
 
