@@ -4,6 +4,11 @@ BTGlow is a desktop application for discovering, connecting to, and controlling 
 
 It is built upon the Tauri ecosystem.
 
+<p align="center">
+    <img src="BTGlow.png" alt="BTGlow App"
+    width="45%"
+</p>
+
 ## Features
 
 - Scan for nearby supported LED devices
