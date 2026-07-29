@@ -62,7 +62,7 @@ Production bundles are generated under:
 src-tauri/target/release/bundle/
 ```
 
-## Basic Usage
+## Usage
 
 1. Enable Bluetooth on the computer.
 2. Open BTGlow.
