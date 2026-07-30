@@ -9,7 +9,7 @@ It is built upon the Tauri ecosystem.
     width="45%"
 </p>
 
-Demo Video can be downloaded at [here!](BTGlow_Demo.mp4) 
+Demo video can be downloaded [here!](BTGlow_Demo.mp4) 
 ## Features
 
 - Scan for nearby supported LED devices
