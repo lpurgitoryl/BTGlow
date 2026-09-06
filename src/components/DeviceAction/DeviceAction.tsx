@@ -24,15 +24,15 @@ const PRESET_COLORS = [
 function hexToRgb(hex: string) {
   const normalizedHex = hex.replace("#", "");
 
-  const red = Number.parseInt(normalizedHex.slice(0, 2), 16);
-  const green = Number.parseInt(normalizedHex.slice(2, 4), 16);
-  const blue = Number.parseInt(normalizedHex.slice(4, 6), 16);
-
   return {
-    red,
-    green,
-    blue,
+    red: Number.parseInt(normalizedHex.slice(0, 2), 16),
+    green: Number.parseInt(normalizedHex.slice(2, 4), 16),
+    blue: Number.parseInt(normalizedHex.slice(4, 6), 16),
   };
+}
+
+function isValidHex(hex: string) {
+  return /^#[0-9A-Fa-f]{6}$/.test(hex);
 }
 
 function DeviceAction() {
@@ -41,6 +41,7 @@ function DeviceAction() {
   const bluetoothUIState = state.bluetoothUIState;
 
   const [hsva, setHsva] = useState(INITIAL_COLOR);
+  const [hexInput, setHexInput] = useState(hsvaToHex(INITIAL_COLOR));
 
   const isConnected =
     bluetoothUIState.status === "connected" ||
@@ -52,35 +53,27 @@ function DeviceAction() {
     return null;
   }
 
-  const selectedHex = hsvaToHex(hsva);
+  function handleApplyColor() {
+    if (!isValidHex(hexInput)) {
+      setHexInput(hsvaToHex(hsva));
+      return;
+    }
 
-  const handlePresetChange = (hex: string) => {
-    setHsva(hexToHsva(hex));
-  };
+    const newHsva = hexToHsva(hexInput);
+    const { red, green, blue } = hexToRgb(hexInput);
 
-  function updateBluetoothLightColor(hex: string) {
-    const rgb = hexToRgb(hex);
+    setHsva(newHsva);
+    setHexInput(hsvaToHex(newHsva));
 
-    console.log("Updating Bluetooth light color:", {
-      hex,
-      ...rgb,
-    });
-
-    updateLightColor(rgb.red, rgb.green, rgb.blue);
+    updateLightColor(red, green, blue);
   }
-
-  const handleApplyColor = () => {
-    updateBluetoothLightColor(selectedHex);
-  };
 
   return (
     <section className="w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-xl shadow-black/20 backdrop-blur">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-        <div>
-          <p className="mt-1 text-sm text-zinc-400">
-            Choose a color for {bluetoothUIState.deviceName}
-          </p>
-        </div>
+        <p className="mt-1 text-sm text-zinc-400">
+          Choose a color for {bluetoothUIState.deviceName}
+        </p>
 
         <div className="flex items-center gap-2">
           <div
@@ -127,10 +120,8 @@ function DeviceAction() {
           <Wheel
             color={hsva}
             onChange={(color) => {
-              setHsva({
-                ...hsva,
-                ...color.hsva,
-              });
+              setHsva(color.hsva);
+              setHexInput(hsvaToHex(color.hsva));
             }}
             style={{
               width: 210,
@@ -138,7 +129,6 @@ function DeviceAction() {
             }}
           />
         </div>
-
         <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4">
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
             Presets
@@ -146,9 +136,12 @@ function DeviceAction() {
 
           <Circle
             colors={PRESET_COLORS}
-            color={selectedHex}
+            color={hsvaToHex(hsva)}
             onChange={(color) => {
-              handlePresetChange(color.hex);
+              const newHsva = hexToHsva(color.hex);
+
+              setHsva(newHsva);
+              setHexInput(color.hex);
             }}
             style={{
               display: "flex",
@@ -157,29 +150,36 @@ function DeviceAction() {
             }}
           />
         </div>
-
         <div className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
           <div
             className="h-12 w-12 shrink-0 rounded-lg border border-white/20 shadow-inner"
             style={{
-              backgroundColor: selectedHex,
-              boxShadow: `0 0 18px ${selectedHex}55`,
+              backgroundColor: hsvaToHex(hsva),
+              boxShadow: `0 0 18px ${hsvaToHex(hsva)}55`,
             }}
           />
 
           <div className="min-w-0 flex-1">
             <p className="text-xs text-zinc-500">Selected color</p>
 
-            <p className="font-mono text-sm font-medium uppercase text-zinc-100">
-              {selectedHex}
-            </p>
+            <input
+              value={hexInput}
+              onChange={(e) => setHexInput(e.target.value)}
+              onBlur={() => {
+                if (!isValidHex(hexInput)) {
+                  setHexInput(hsvaToHex(hsva));
+                }
+              }}
+              maxLength={7}
+              className="w-full bg-transparent font-mono text-sm font-medium uppercase text-zinc-100 border rounded-sm border-gray-600 focus:border-emerald-400 px-2 py-1 "
+            />
           </div>
 
           <button
             type="button"
             disabled={isDisconnecting}
             onClick={handleApplyColor}
-            className="cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Apply
           </button>
