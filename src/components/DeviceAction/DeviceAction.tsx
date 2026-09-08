@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Circle, Wheel } from "@uiw/react-color";
-import { hexToHsva, hsvaToHex } from "@uiw/color-convert";
+import { hexToHsva, hsvaToHex, validHex } from "@uiw/color-convert";
 import { useBluetoothStore } from "../../stores/bluetoothStore";
 
 const INITIAL_COLOR = {
@@ -31,10 +31,6 @@ function hexToRgb(hex: string) {
   };
 }
 
-function isValidHex(hex: string) {
-  return /^#[0-9A-Fa-f]{6}$/.test(hex);
-}
-
 function DeviceAction() {
   const { state, disconnectFromDevice, updateLightColor } = useBluetoothStore();
 
@@ -54,7 +50,7 @@ function DeviceAction() {
   }
 
   function handleApplyColor() {
-    if (!isValidHex(hexInput)) {
+    if (!validHex(hexInput)) {
       setHexInput(hsvaToHex(hsva));
       return;
     }
@@ -166,8 +162,9 @@ function DeviceAction() {
               value={hexInput}
               onChange={(e) => setHexInput(e.target.value)}
               onBlur={() => {
-                if (!isValidHex(hexInput)) {
+                if (!validHex(hexInput)) {
                   setHexInput(hsvaToHex(hsva));
+                  console.warn(`Invalid hex color: ${hexInput}`);
                 }
               }}
               maxLength={7}
