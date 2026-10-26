@@ -38,12 +38,14 @@ function DeviceAction() {
 
   const [hsva, setHsva] = useState(INITIAL_COLOR);
   const [hexInput, setHexInput] = useState(hsvaToHex(INITIAL_COLOR));
+  const [brightness, setBrightness] = useState(100);
 
   const isConnected =
     bluetoothUIState.status === "connected" ||
     bluetoothUIState.status === "sending_command";
 
   const isDisconnecting = bluetoothUIState.status === "disconnecting";
+  const isSendingCommand = bluetoothUIState.status === "sending_command";
 
   if (!isConnected && !isDisconnecting) {
     return null;
@@ -56,23 +58,26 @@ function DeviceAction() {
     }
 
     const newHsva = hexToHsva(hexInput);
-    const { red, green, blue } = hexToRgb(hexInput);
+    const { red, green, blue } = hexToRgb(hsvaToHex(newHsva));
 
     setHsva(newHsva);
     setHexInput(hsvaToHex(newHsva));
 
-    updateLightColor(red, green, blue);
+    updateLightColor(red, green, blue, brightness);
   }
 
   return (
     <section className="w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-xl shadow-black/20 backdrop-blur">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <p className="mt-1 text-sm text-zinc-400">
-          Choose a color for {bluetoothUIState.deviceName}
+          Color and brightness for {bluetoothUIState.deviceName}
         </p>
 
         <div className="flex items-center gap-2">
           <div
+            role="status"
+            aria-label={isDisconnecting ? "Disconnecting" : "Connected"}
+            title={isDisconnecting ? "Disconnecting" : "Connected"}
             className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${
               isDisconnecting
                 ? "border-amber-500/20 bg-amber-500/10"
@@ -98,7 +103,7 @@ function DeviceAction() {
 
           <button
             type="button"
-            disabled={isDisconnecting}
+            disabled={isDisconnecting || isSendingCommand}
             onClick={disconnectFromDevice}
             className="cursor-pointer rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:border-red-400/50 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -126,7 +131,7 @@ function DeviceAction() {
           />
         </div>
         <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-400">
             Presets
           </p>
 
@@ -146,6 +151,27 @@ function DeviceAction() {
             }}
           />
         </div>
+        <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4">
+          <label
+            htmlFor="brightness"
+            className="mb-3 flex justify-between text-xs font-medium uppercase tracking-wider text-zinc-400"
+          >
+            <span>Brightness</span>
+            <span className="text-zinc-100 tabular-nums">{brightness}%</span>
+          </label>
+          <input
+            id="brightness"
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={brightness}
+            aria-valuetext={`${brightness}%`}
+            onChange={(e) => setBrightness(Number(e.target.value))}
+            disabled={isDisconnecting}
+            className="w-full cursor-pointer accent-zinc-300 disabled:cursor-not-allowed"
+          />
+        </div>
         <div className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
           <div
             className="h-12 w-12 shrink-0 rounded-lg border border-white/20 shadow-inner"
@@ -156,11 +182,23 @@ function DeviceAction() {
           />
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-zinc-500">Selected color</p>
+            <label htmlFor="selected-color" className="text-xs text-zinc-400">
+              Selected color
+            </label>
 
             <input
+              id="selected-color"
               value={hexInput}
               onChange={(e) => setHexInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  !isDisconnecting &&
+                  !isSendingCommand
+                ) {
+                  handleApplyColor();
+                }
+              }}
               onBlur={() => {
                 if (!validHex(hexInput)) {
                   setHexInput(hsvaToHex(hsva));
@@ -168,17 +206,18 @@ function DeviceAction() {
                 }
               }}
               maxLength={7}
-              className="w-full bg-transparent font-mono text-sm font-medium uppercase text-zinc-100 border rounded-sm border-gray-600 focus:border-emerald-400 px-2 py-1 "
+              className="w-full bg-transparent font-mono text-sm font-medium uppercase text-zinc-100 border rounded-sm border-gray-600 focus:border-zinc-300 px-2 py-1 "
             />
           </div>
 
           <button
             type="button"
-            disabled={isDisconnecting}
+            disabled={isDisconnecting || isSendingCommand}
+            aria-busy={isSendingCommand}
             onClick={handleApplyColor}
             className="mt-2 cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Apply
+            {isSendingCommand ? "Applying…" : "Apply"}
           </button>
         </div>
       </div>

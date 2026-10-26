@@ -3,7 +3,7 @@ use curl_smile::{
         connect_to_btle_device, disconnect_from_btle_device, find_supported_devices,
     },
     hardware_abstraction_layer::device::SupportedDevice,
-    Intent::{Rgb, SwitchOn},
+    Intent::{Brightness, Rgb, SwitchOn},
     LightState,
 };
 
@@ -214,8 +214,11 @@ async fn update_light_color(
     red: u8,
     green: u8,
     blue: u8,
+    brightness: u8,
     state: State<'_, Mutex<AppState>>,
 ) -> Result<String, String> {
+    let brightness = brightness.min(100);
+
     let device = {
         let app_state = state.lock().unwrap();
 
@@ -227,6 +230,7 @@ async fn update_light_color(
 
     let mut d_state = LightState::new();
     d_state.update(Rgb { red, green, blue });
+    d_state.update(Brightness { brightness });
     device
         .send_commands(&d_state)
         .await

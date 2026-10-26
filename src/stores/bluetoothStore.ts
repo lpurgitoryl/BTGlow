@@ -52,7 +52,12 @@ type BluetoothStoreActions = {
   searchDevices: () => Promise<void>;
   connectToDevice: (deviceName: string) => Promise<void>;
   disconnectFromDevice: () => Promise<void>;
-  updateLightColor: (red: number, green: number, blue: number) => Promise<void>;
+  updateLightColor: (
+    red: number,
+    green: number,
+    blue: number,
+    brightness: number,
+  ) => Promise<void>;
   initializeBluetooth: () => Promise<void>;
 };
 
@@ -216,7 +221,12 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
       }));
     }
   },
-  updateLightColor: async (red: number, green: number, blue: number) => {
+  updateLightColor: async (
+    red: number,
+    green: number,
+    blue: number,
+    brightness: number,
+  ) => {
     const currentState = get().state;
 
     if (
@@ -237,7 +247,7 @@ export const useBluetoothStore = create<BluetoothStore>((set, get) => ({
     });
 
     try {
-      await invoke<string>("update_light_color", { red, green, blue });
+      await invoke<string>("update_light_color", { red, green, blue, brightness });
 
       set({
         state: {
